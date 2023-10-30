@@ -1,53 +1,25 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class InteriorPointMethod {
     public static void main(String[] args) {
-        List<Double> c = new ArrayList<>();
-        List<List<Double>> a = new ArrayList<>();
-        List<Double> b = new ArrayList<>();
+        List<Double> c = new ArrayList<>(Arrays.asList(2.0, 3.0, 4.0)); // A vector of coefficients of the objective function
+        List<List<Double>> a = new ArrayList<>(Arrays.asList(
+                Arrays.asList(3.0, 2.0, 1.0),
+                Arrays.asList(2.0, 5.0, 3.0),
+                Arrays.asList(4.0, 1.0, 2.0)
+        )); // A matrix of coefficients of constraints
+        List<Double> b = new ArrayList<>(Arrays.asList(10.0, 15.0, 8.0)); // A vector of right-hand sides of constraints
         double eps = 0.0001;
         double alpha1 = 0.5;
         double alpha2 = 0.9;
-
-        // maximize 2x1 + 3x2 + 4x3
-        // subject to:
-        // 3x1 + 2x2 + x3 <= 10
-        // 2x1 + 5x2 + 3x3 <= 15
-        // 4x1 + x2 + 2x3 <= 8
-        // x1, x2, x3 >= 0
-
-        c.add(2.0);
-        c.add(3.0);
-        c.add(4.0);
-
-        List<Double> a1 = new ArrayList<>();
-        a1.add(3.0);
-        a1.add(2.0);
-        a1.add(1.0);
-        a.add(a1);
-
-        List<Double> a2 = new ArrayList<>();
-        a2.add(2.0);
-        a2.add(5.0);
-        a2.add(3.0);
-        a.add(a2);
-
-        List<Double> a3 = new ArrayList<>();
-        a3.add(4.0);
-        a3.add(1.0);
-        a3.add(2.0);
-        a.add(a3);
-
-        b.add(10.0);
-        b.add(15.0);
-        b.add(8.0);
 
         System.out.println("\n--- Interior-Point Method ---\n");
 
         SimplexResult simplexResult = SimplexMethod.solve(c, a, b, eps);
         if (simplexResult.getObj() == Double.POSITIVE_INFINITY) {
-            System.out.println("The problem does not have solution!");
+            System.out.println("The problem does not have a solution!");
             return;
         }
 
@@ -77,54 +49,17 @@ public class InteriorPointMethod {
         return sb.toString();
     }
 
-    private static List<Double> solveInteriorPointMethod(List<Double> c, List<List<Double>> a, List<Double> b,
-            double eps, double alpha) {
+    private static List<Double> solveInteriorPointMethod(List<Double> c, List<List<Double>> a, List<Double> b, double eps, double alpha) {
         int n = c.size();
         int m = b.size();
-        List<Double> x = new ArrayList<>(n);
-        for (int i = 0; i < n; i++) {
-            x.add(1.0);
-        }
-        List<Double> s = new ArrayList<>(m);
-        for (int i = 0; i < m; i++) {
-            s.add(1.0);
-        }
+        List<Double> x = initializeX(n, m);
+        List<Double> s = initializeS(m);
         double t = 1.0;
 
         while (true) {
-            List<List<Double>> A = new ArrayList<>(m + 1);
-            for (int i = 0; i < m; i++) {
-                List<Double> row = new ArrayList<>(n + m + 1);
-                for (int j = 0; j < n; j++) {
-                    row.add(a.get(i).get(j));
-                }
-                for (int j = 0; j < m; j++) {
-                    row.add(0.0);
-                }
-                row.add(s.get(i));
-                A.add(row);
-            }
-            List<Double> row = new ArrayList<>(n + m + 1);
-            for (int i = 0; i < n; i++) {
-                row.add(0.0);
-            }
-            for (int i = 0; i < m; i++) {
-                row.add(a.get(i).get(n - 1));
-            }
-            row.add(0.0);
-            A.add(row);
-
-            List<Double> bNew = new ArrayList<>(b);
-            bNew.add(0.0);
-
-            List<Double> cNew = new ArrayList<>(n + m + 1);
-            for (int i = 0; i < n; i++) {
-                cNew.add(c.get(i));
-            }
-            for (int i = 0; i < m; i++) {
-                cNew.add(0.0);
-            }
-            cNew.add(-t);
+            List<List<Double>> A = formMatrixA(a, s, m, n);
+            List<Double> bNew = formVectorB(b);
+            List<Double> cNew = formVectorC(c, n, m, t);
 
             SimplexResult result = SimplexMethod.solve(cNew, A, bNew, eps);
             if (result.getObj() == Double.POSITIVE_INFINITY) {
@@ -133,33 +68,11 @@ public class InteriorPointMethod {
             }
 
             List<Double> y = result.getX();
-            double mu = 0.0;
-            for (int i = 0; i < m; i++) {
-                mu += s.get(i) / b.get(i);
-            }
-            mu /= m;
+            double mu = calculateMu(s, b, m);
+            double tNew = updateT(t, alpha);
+            double sigma = calculateSigma(t, tNew, mu);
 
-            double tNew = alpha * t;
-            double sigma = (t / tNew) * mu;
-
-            boolean done = true;
-            for (int i = 0; i < n; i++) {
-                double xi = y.get(i);
-                double si = y.get(n + i);
-                double delta = sigma - si * xi;
-                if (delta > 0) {
-                    done = false;
-                    x.set(i, xi + delta / (si + eps));
-                }
-            }
-            for (int i = 0; i < m; i++) {
-                double si = y.get(n + i);
-                double delta = sigma - si * b.get(i);
-                if (delta > 0) {
-                    done = false;
-                    s.set(i, si + delta / (b.get(i) + eps));
-                }
-            }
+            boolean done = adjustXandS(x, y, s, b, sigma, eps, n, m);
 
             if (done) {
                 return x;
@@ -167,6 +80,108 @@ public class InteriorPointMethod {
 
             t = tNew;
         }
+    }
+
+    private static List<Double> initializeX(int n, int m) {
+        List<Double> x = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            x.add(1.0);
+        }
+        return x;
+    }
+
+    private static List<Double> initializeS(int m) {
+        List<Double> s = new ArrayList<>(m);
+        for (int i = 0; i < m; i++) {
+            s.add(1.0);
+        }
+        return s;
+    }
+
+    private static List<List<Double>> formMatrixA(List<List<Double>> a, List<Double> s, int m, int n) {
+        List<List<Double>> A = new ArrayList<>(m + 1);
+        for (int i = 0; i < m; i++) {
+            List<Double> row = new ArrayList<>(n + m + 1);
+            for (int j = 0; j < n; j++) {
+                row.add(a.get(i).get(j));
+            }
+            for (int j = 0; j < m; j++) {
+                row.add(0.0);
+            }
+            row.add(s.get(i));
+            A.add(row);
+        }
+
+        List<Double> row = new ArrayList<>(n + m + 1);
+        for (int i = 0; i < n; i++) {
+            row.add(0.0);
+        }
+        for (int i = 0; i < m; i++) {
+            row.add(a.get(i).get(n - 1));
+        }
+        row.add(0.0);
+        A.add(row);
+
+        return A;
+    }
+
+    private static List<Double> formVectorB(List<Double> b) {
+        List<Double> bNew = new ArrayList<>(b);
+        bNew.add(0.0);
+        return bNew;
+    }
+
+    private static List<Double> formVectorC(List<Double> c, int n, int m, double t) {
+        List<Double> cNew = new ArrayList<>(n + m + 1);
+        for (int i = 0; i < n; i++) {
+            cNew.add(c.get(i));
+        }
+        for (int i = 0; i < m; i++) {
+            cNew.add(0.0);
+        }
+        cNew.add(-t);
+        return cNew;
+    }
+
+    private static double calculateMu(List<Double> s, List<Double> b, int m) {
+        double mu = 0.0;
+        for (int i = 0; i < m; i++) {
+            mu += s.get(i) / b.get(i);
+        }
+        mu /= m;
+        return mu;
+    }
+
+    private static double updateT(double t, double alpha) {
+        double tNew = alpha * t;
+        return tNew;
+    }
+
+    private static double calculateSigma(double t, double tNew, double mu) {
+        double sigma = (t / tNew) * mu;
+        return sigma;
+    }
+
+    private static boolean adjustXandS(List<Double> x, List<Double> y, List<Double> s, List<Double> b, double sigma, double eps, int n, int m) {
+        boolean done = true;
+        for (int i = 0; i < n; i++) {
+            double xi = y.get(i);
+            double si = y.get(n + i);
+            double delta = sigma - si * xi;
+            if (delta > 0) {
+                done = false;
+                x.set(i, xi + delta / (si + eps));
+            }
+        }
+        for (int i = 0; i < m; i++) {
+            double si = y.get(n + i);
+            double delta = sigma - si * b.get(i);
+            if (delta > 0) {
+                done = false;
+                s.set(i, si + delta / (b.get(i) + eps));
+            }
+        }
+        return done;
     }
 
     private static double calculateObjectiveFunction(List<Double> c, List<Double> x) {
