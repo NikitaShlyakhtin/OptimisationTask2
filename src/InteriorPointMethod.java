@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class InteriorPointMethod {
@@ -17,7 +16,8 @@ public class InteriorPointMethod {
         return sb.toString();
     }
 
-    public static List<Double> solveInteriorPointMethod(List<Double> c, List<List<Double>> a, List<Double> b, double eps, double alpha) {
+    public static InteriorPointMethodResult solve(List<Double> c, List<List<Double>> a, List<Double> b,
+            double eps, double alpha) {
         int n = c.size();
         int m = b.size();
         List<Double> x = initializeX(n, m);
@@ -43,6 +43,7 @@ public class InteriorPointMethod {
             boolean done = adjustXandS(x, y, s, b, sigma, eps, n, m);
 
             if (done) {
+                return new InteriorPointMethodResult(calculateObjectiveFunction(cNew, x), x)
                 return x;
             }
 
@@ -130,7 +131,8 @@ public class InteriorPointMethod {
         return sigma;
     }
 
-    private static boolean adjustXandS(List<Double> x, List<Double> y, List<Double> s, List<Double> b, double sigma, double eps, int n, int m) {
+    private static boolean adjustXandS(List<Double> x, List<Double> y, List<Double> s, List<Double> b, double sigma,
+            double eps, int n, int m) {
         boolean done = true;
         for (int i = 0; i < n; i++) {
             double xi = y.get(i);
