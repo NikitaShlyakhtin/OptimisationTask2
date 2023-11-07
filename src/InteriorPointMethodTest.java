@@ -5,7 +5,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * The type Interior point method test.
+ */
 public class InteriorPointMethodTest {
+    /**
+     * Test three variable problem.
+     */
     @Test
     public void testThreeVariableProblem() {
         List<Double> c = Arrays.asList(2.0, 3.0, 4.0);
@@ -29,6 +35,9 @@ public class InteriorPointMethodTest {
         }
     }
 
+    /**
+     * Test two variable problem.
+     */
     @Test
     public void testTwoVariableProblem() {
         List<Double> c = Arrays.asList(-2.0, -3.0);
@@ -51,6 +60,9 @@ public class InteriorPointMethodTest {
         }
     }
 
+    /**
+     * Test four variable problem.
+     */
     @Test
     public void testFourVariableProblem() {
         List<Double> c = Arrays.asList(2.0, 3.0, -1.0, -4.0);

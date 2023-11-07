@@ -1,8 +1,17 @@
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Interior point method.
+ */
 public class InteriorPointMethod {
 
+    /**
+     * Format list string.
+     *
+     * @param list the list
+     * @return formatted string
+     */
     public static String formatList(List<Double> list) {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
@@ -16,6 +25,16 @@ public class InteriorPointMethod {
         return sb.toString();
     }
 
+    /**
+     * Solve interior point method result.
+     *
+     * @param c     the vector of coefficients of the objective function
+     * @param a     the matrix of coefficients of constraints
+     * @param b     the right side of constraints
+     * @param eps   the approximation accuracy
+     * @param alpha the alpha
+     * @return the interior point method result
+     */
     public static InteriorPointMethodResult solve(List<Double> c, List<List<Double>> a, List<Double> b,
             double eps, double alpha) {
         int n = c.size();
@@ -51,6 +70,7 @@ public class InteriorPointMethod {
         }
     }
 
+    // Create vector x with ones
     private static List<Double> initializeX(int n, int m) {
         List<Double> x = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
@@ -59,6 +79,7 @@ public class InteriorPointMethod {
         return x;
     }
 
+    // Create vector s with ones
     private static List<Double> initializeS(int m) {
         List<Double> s = new ArrayList<>(m);
         for (int i = 0; i < m; i++) {
@@ -67,6 +88,7 @@ public class InteriorPointMethod {
         return s;
     }
 
+    // Construct matrix of coefficients of constraints
     private static List<List<Double>> formMatrixA(List<List<Double>> a, List<Double> s, int m, int n) {
         List<List<Double>> A = new ArrayList<>(m + 1);
         for (int i = 0; i < m; i++) {
@@ -94,12 +116,14 @@ public class InteriorPointMethod {
         return A;
     }
 
+    // Create vector b with zeros
     private static List<Double> formVectorB(List<Double> b) {
         List<Double> bNew = new ArrayList<>(b);
         bNew.add(0.0);
         return bNew;
     }
 
+    // Create vector c
     private static List<Double> formVectorC(List<Double> c, int n, int m, double t) {
         List<Double> cNew = new ArrayList<>(n + m + 1);
         for (int i = 0; i < n; i++) {
@@ -112,6 +136,7 @@ public class InteriorPointMethod {
         return cNew;
     }
 
+    // Calculate barrier parameter
     private static double calculateMu(List<Double> s, List<Double> b, int m) {
         double mu = 0.0;
         for (int i = 0; i < m; i++) {
@@ -131,6 +156,7 @@ public class InteriorPointMethod {
         return sigma;
     }
 
+    // improve the values of the primal and slack variables, so that they better satisfy the optimality conditions
     private static boolean adjustXandS(List<Double> x, List<Double> y, List<Double> s, List<Double> b, double sigma,
             double eps, int n, int m) {
         boolean done = true;
@@ -154,6 +180,13 @@ public class InteriorPointMethod {
         return done;
     }
 
+    /**
+     * Calculate objective function double.
+     *
+     * @param c the c
+     * @param x the x
+     * @return the double
+     */
     public static double calculateObjectiveFunction(List<Double> c, List<Double> x) {
         double obj = 0.0;
         for (int i = 0; i < c.size(); i++) {
