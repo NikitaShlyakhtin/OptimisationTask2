@@ -35,7 +35,8 @@ public class InteriorPointMethod {
      * @param alpha the alpha
      * @return the interior point method result
      */
-    public static InteriorPointMethodResult solve(List<Double> c, List<List<Double>> a, List<Double> b,
+    public static List<Double> solveInteriorPointMethod(List<Double> c, List<List<Double>> a, List<Double> b,
+
             double eps, double alpha) {
         int n = c.size();
         int m = b.size();
@@ -62,7 +63,6 @@ public class InteriorPointMethod {
             boolean done = adjustXandS(x, y, s, b, sigma, eps, n, m);
 
             if (done) {
-                return new InteriorPointMethodResult(calculateObjectiveFunction(cNew, x), x)
                 return x;
             }
 
@@ -156,7 +156,6 @@ public class InteriorPointMethod {
         return sigma;
     }
 
-    // improve the values of the primal and slack variables, so that they better satisfy the optimality conditions
     private static boolean adjustXandS(List<Double> x, List<Double> y, List<Double> s, List<Double> b, double sigma,
             double eps, int n, int m) {
         boolean done = true;
